@@ -83,7 +83,7 @@ int main() {
     curl_easy_setopt(hnd, CURLOPT_HTTPHEADER, headers);
 
     curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, base64_string);
-    char buffer[1024];
+    char buffer[100000];
 
     curl_easy_setopt(hnd, CURLOPT_WRITEDATA, buffer);
 
