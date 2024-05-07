@@ -115,7 +115,7 @@ int main() {
     json_object_put(response_json);
 
     printf("Done\n");
-    printf("Metadata: %s\n", json_object_to_json_string_ext(metadata, JSON_C_TO_STRING_PRETTY));
+    printf("Value: %s\n", json_object_get_string(metadata));
 
     return 0;
 }
