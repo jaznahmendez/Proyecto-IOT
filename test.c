@@ -83,14 +83,21 @@ int main() {
     curl_easy_setopt(hnd, CURLOPT_HTTPHEADER, headers);
 
     curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, base64_string);
-    char buffer[100000];
+    char response_buffer[10000] = {0};
 
-    curl_easy_setopt(hnd, CURLOPT_WRITEDATA, buffer);
+    curl_easy_setopt(hnd, CURLOPT_WRITEDATA, response_buffer);
 
 
     CURLcode ret = curl_easy_perform(hnd);
-
-    puts(buffer);
+    struct json_object *parsed_json = json_tokener_parse(response_buffer);
+            // Now you can use the parsed_json object to access the JSON data
+            
+            // Print the parsed JSON
+    printf("Parsed JSON:\n%s\n", json_object_to_json_string_ext(parsed_json, JSON_C_TO_STRING_PRETTY));
+            
+            // Don't forget to free the parsed JSON object when done
+    json_object_put(parsed_json);
+        
 
 
     free(data);
