@@ -84,8 +84,13 @@ int main() {
 
     curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, base64_string);
 
+    printf("JALO\n");
     CURLcode ret = curl_easy_perform(hnd);
 
+
+
+   
+    printf("%d\n", ret);
     free(data);
     free(base64_string);
     return 0;
