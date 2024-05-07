@@ -2,8 +2,8 @@ CC ?= gcc
 CFLAGS = $(shell pkg-config --cflags json-c)
 LDFLAGS = $(shell pkg-config --libs json-c) -lcurl
 
-APP_NAME = test-ac
-OBJS = test-ac.o
+APP_NAME = test
+OBJS = test.o
 
 all: $(APP_NAME)
 
