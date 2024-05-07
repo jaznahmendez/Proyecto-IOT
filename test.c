@@ -109,7 +109,7 @@ int main() {
 
 
     struct json_object * metadata = NULL;
-    json_object_object_get(response_json, "response", &metadata);
+    json_object_object_get_ex(response_json, "response", &metadata);
 
     // Clean up
     json_object_put(response_json);
