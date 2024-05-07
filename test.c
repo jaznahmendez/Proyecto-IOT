@@ -42,7 +42,7 @@ char* base64_encode(const unsigned char *data, size_t input_length) {
 }
 
 int main() {
-    FILE *file = fopen("africa-toto.wav", "rb");
+    FILE *file = fopen("salmini.raw", "rb");
     if (file == NULL) {
         perror("Error opening file");
         return 1;
@@ -69,7 +69,7 @@ int main() {
         return 1;
     }
 
-    printf("%s\n", base64_string);
+    //printf("%s\n", base64_string);
     
     CURL *hnd = curl_easy_init();
 
