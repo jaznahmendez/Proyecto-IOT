@@ -107,8 +107,15 @@ int main() {
     // Print the parsed JSON object
     printf("Response JSON:\n%s\n", json_object_to_json_string_ext(response_json, JSON_C_TO_STRING_PRETTY));
 
+
+    struct json_object * metadata = NULL;
+    metadata = json_object_object_get(response_json, "metadata");
+
     // Clean up
     json_object_put(response_json);
+
+    printf("Done\n");
+    printf("Metadata: %s\n", json_object_to_json_string_ext(metadata, JSON_C_TO_STRING_PRETTY));
 
     return 0;
 }
