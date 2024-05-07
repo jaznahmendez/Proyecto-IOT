@@ -108,16 +108,20 @@ int main() {
     printf("Response JSON:\n%s\n", json_object_to_json_string_ext(response_json, JSON_C_TO_STRING_PRETTY));
 
     struct json_object * metadata;
+    struct json_object * track;
+    struct json_object * title;
+    struct json_object * subtitle;
     metadata = json_object_object_get(response_json, "response");
+    track = json_object_object_get(metadata, "track");
+    title = json_object_object_get(track, "title");
+    subtitle = json_object_object_get(track, "subtitle");
 
     printf("JSON CREATED\n");
-    printf("Metadata JSON:\n%s\n", json_object_to_json_string_ext(metadata, JSON_C_TO_STRING_PRETTY));
-
+    //printf("Metadata JSON:\n%s\n", json_object_to_json_string_ext(metadata, JSON_C_TO_STRING_PRETTY));
+    printf("Title: %s\n", json_object_get_string(title));
+    printf("Subtitle: %s\n", json_object_get_string(subtitle));
 
     // Clean up
-
-
-
     json_object_put(response_json);
 
 
