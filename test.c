@@ -7,6 +7,25 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
+#include <wayland-client.h>
+
+
+struct wl_display *display;
+struct wl_compositor *compositor;
+struct wl_surface *surface;
+
+void registry_global_handler(void *data, struct wl_registry *registry, 
+                             uint32_t id, const char *interface, uint32_t version) {
+    if (strcmp(interface, "wl_compositor") == 0) {
+        compositor = wl_registry_bind(registry, id, &wl_compositor_interface, 1);
+    }
+}
+
+
+struct wl_registry_listener registry_listener = {
+    registry_global_handler
+};
+
 
 char* base64_encode(const unsigned char *data, size_t input_length) {
     static const char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -125,6 +144,38 @@ int main() {
     printf("Title: %s\n", json_object_get_string(title));
     printf("Subtitle: %s\n", json_object_get_string(subtitle));
     printf("Coverart: %s\n", json_object_get_string(coverart));
+
+    display = wl_display_connect(NULL);
+    if (!display) {
+        fprintf(stderr, "Failed to connect to Wayland display\n");
+        return 1;
+    }
+
+    struct wl_registry *registry = wl_display_get_registry(display);
+    wl_registry_add_listener(registry, &registry_listener, NULL);
+    wl_display_dispatch(display);
+    wl_display_roundtrip(display);
+
+    if (!compositor) {
+        fprintf(stderr, "Failed to get compositor\n");
+        return 1;
+    }
+
+    surface = wl_compositor_create_surface(compositor);
+    if (!surface) {
+        fprintf(stderr, "Failed to create surface\n");
+        return 1;
+    }
+
+    const char *text = "Hello, Wayland!";
+    printf("Printing text: %s\n", text);
+
+    wl_display_roundtrip(display);
+
+    wl_display_disconnect(display);
+    
+
+
 
     // Clean up
     json_object_put(response_json);
