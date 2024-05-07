@@ -8,13 +8,6 @@
 #include <curl/curl.h>
 #include <json-c/json.h>
 
-#include <pthread.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-
-#include <linux/input.h>
-#include <semaphore.h>
-
 char* base64_encode(const unsigned char *data, size_t input_length) {
     static const char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     size_t output_length = 4 * ((input_length + 2) / 3);
@@ -39,6 +32,16 @@ char* base64_encode(const unsigned char *data, size_t input_length) {
     }
 
     return encoded_data;
+}
+
+size_t write_callback(void *ptr, size_t size, size_t nmemb, struct json_object *json_obj) {
+    json_object *parsed_json = json_tokener_parse(ptr);
+    if (!parsed_json) {
+        fprintf(stderr, "Error parsing JSON\n");
+        return 0;
+    }
+    json_object_object_add(json_obj, "response", parsed_json);
+    return size * nmemb;
 }
 
 int main() {
@@ -69,8 +72,6 @@ int main() {
         return 1;
     }
 
-    //printf("%s\n", base64_string);
-    
     CURL *hnd = curl_easy_init();
 
     curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "POST");
@@ -83,24 +84,31 @@ int main() {
     curl_easy_setopt(hnd, CURLOPT_HTTPHEADER, headers);
 
     curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, base64_string);
-    char response_buffer[10000] = {0};
 
-    curl_easy_setopt(hnd, CURLOPT_WRITEDATA, response_buffer);
+    struct json_object *response_json = json_object_new_object();
 
+    curl_easy_setopt(hnd, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(hnd, CURLOPT_WRITEDATA, response_json);
 
     CURLcode ret = curl_easy_perform(hnd);
-    struct json_object *parsed_json = json_tokener_parse(response_buffer);
-            // Now you can use the parsed_json object to access the JSON data
-            
-            // Print the parsed JSON
-    printf("Parsed JSON:\n%s\n", json_object_to_json_string_ext(parsed_json, JSON_C_TO_STRING_PRETTY));
-            
-            // Don't forget to free the parsed JSON object when done
-    json_object_put(parsed_json);
-        
 
+    curl_easy_cleanup(hnd);
+    curl_slist_free_all(headers);
 
     free(data);
     free(base64_string);
+
+    if (ret != CURLE_OK) {
+        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(ret));
+        json_object_put(response_json);
+        return 1;
+    }
+
+    // Print the parsed JSON object
+    printf("Response JSON:\n%s\n", json_object_to_json_string_ext(response_json, JSON_C_TO_STRING_PRETTY));
+
+    // Clean up
+    json_object_put(response_json);
+
     return 0;
 }
