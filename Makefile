@@ -1,6 +1,8 @@
 CC ?= gcc
-CFLAGS = $(shell pkg-config --cflags json-c)
-LDFLAGS = $(shell pkg-config --libs json-c) -lcurl
+
+LIB = json-c
+CURL = curl
+
 
 APP_NAME = test
 OBJS = test.o
@@ -8,10 +10,10 @@ OBJS = test.o
 all: $(APP_NAME)
 
 $(APP_NAME): $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $^ -l$(LIB) -l$(CURL)
 
 %.o: %.c
-	$(CC) -c $< -o $@ $(CFLAGS)
+	$(CC) -c $< -o $@ 
 
 clean:
 	rm -f *.o $(APP_NAME)
