@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
     wl_surface_commit(surface);
 
     // Render text onto the buffer
-    render_text((unsigned char *)data, width, height, "TITLE", 10, 30);
+    render_text((unsigned char *)data, 500, 500, "TITLE", 10, 30);
 
     free(raw_image_data);
 
