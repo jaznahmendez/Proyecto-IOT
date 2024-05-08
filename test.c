@@ -177,6 +177,9 @@ int main() {
 
     // Load image from file
     FILE *image_file = fopen("image.jpg", "rb");
+
+    printf("Image file opened\n");
+
     if (!image_file) {
         fprintf(stderr, "Failed to open image file\n");
         return 1;
