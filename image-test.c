@@ -96,12 +96,16 @@ int main(int argc, char *argv[]) {
     int height = cinfo.output_height;
     int num_channels = cinfo.output_components; // Number of color channels
 
+    // New width and height
+    int new_width = 720;
+    int new_height = 1280;
+
     // Calculate stride (bytes per row) based on the width and number of channels
-    int stride = width * num_channels;
+    int stride = new_width * num_channels;
     // Ensure stride is aligned to 4 bytes (32 bits)
     stride = (stride + 3) & ~3;
 
-    int size = stride * height;
+    int size = stride * new_height;
     unsigned char *raw_image_data = malloc(size);
 
     // Read scanlines one by one and copy them into raw_image_data buffer
@@ -122,7 +126,7 @@ int main(int argc, char *argv[]) {
 
     struct wl_shm_pool *pool = wl_shm_create_pool(shm, fd, size);
     struct wl_buffer *buffer = wl_shm_pool_create_buffer(pool,
-        0, width, height, stride, WL_SHM_FORMAT_ARGB8888);
+        0, new_width, new_height, stride, WL_SHM_FORMAT_ARGB8888);
 
     wl_surface_attach(surface, buffer, 0, 0);
     wl_surface_commit(surface);
