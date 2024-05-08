@@ -202,6 +202,8 @@ int main() {
     fread(image_data, 1, image_size, image_file);
     fclose(image_file);
 
+    printf("Image data read\n");
+
     // Encode image data to base64
     char *image_base64 = base64_encode(image_data, image_size);
     if (!image_base64) {
@@ -209,6 +211,9 @@ int main() {
         free(image_data);
         return 1;
     }
+
+    printf("Image encoded to base64\n");
+
 
     // Cleanup image data
     free(image_data);
