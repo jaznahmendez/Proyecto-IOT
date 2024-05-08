@@ -8,22 +8,19 @@
 #include <curl/curl.h>
 #include <json-c/json.h>
 #include <wayland-client.h>
-#include <sys/mman.h> 
+
 
 struct wl_display *display;
 struct wl_compositor *compositor;
-struct wl_surface *surface; // Define surface globally for later use
-struct wl_shm *shm;
-struct wl_shell *shell;
+struct wl_surface *surface;
 
-void registry_global_handler(void *data, struct wl_registry *registry,
+void registry_global_handler(void *data, struct wl_registry *registry, 
                              uint32_t id, const char *interface, uint32_t version) {
     if (strcmp(interface, "wl_compositor") == 0) {
         compositor = wl_registry_bind(registry, id, &wl_compositor_interface, 1);
-    } else if (strcmp(interface, "wl_shm") == 0) {
-        shm = wl_registry_bind(registry, id, &wl_shm_interface, 1);
     }
 }
+
 
 struct wl_registry_listener registry_listener = {
     registry_global_handler
@@ -153,7 +150,7 @@ int main() {
     api_call(base64_string);
    
 
-     display = wl_display_connect(NULL);
+    display = wl_display_connect(NULL);
     if (!display) {
         fprintf(stderr, "Failed to connect to Wayland display\n");
         return 1;
@@ -175,75 +172,19 @@ int main() {
         return 1;
     }
 
-    // Load image from file
-    FILE *image_file = fopen("image.jpg", "rb");
+    const char *text = "Hello, Wayland!";
+    printf("Printing text: %s\n", text);
 
-    printf("Image file opened\n");
+    wl_display_roundtrip(display);
 
-    if (!image_file) {
-        fprintf(stderr, "Failed to open image file\n");
-        return 1;
-    }
-
-    fseek(image_file, 0, SEEK_END);
-    long image_size = ftell(image_file);
-    fseek(image_file, 0, SEEK_SET);
+    wl_display_disconnect(display);
     
-    printf("Image file size: %ld\n", image_size);
 
 
-    unsigned char *image_data = (unsigned char *)malloc(image_size);
-    if (!image_data) {
-        fprintf(stderr, "Failed to allocate memory for image\n");
-        fclose(image_file);
-        return 1;
-    }
-
-    fread(image_data, 1, image_size, image_file);
-    fclose(image_file);
-
-    printf("Image data read\n");
-
-    // Encode image data to base64
-    char *image_base64 = base64_encode(image_data, image_size);
-    if (!image_base64) {
-        fprintf(stderr, "Failed to encode image to base64\n");
-        free(image_data);
-        return 1;
-    }
-
-    printf("Image encoded to base64\n");
-
-
-    // Cleanup image data
-    //free(image_data);
-
-    // Create shared memory pool and buffer
-    int width = 400;
-    int height = 400;
-    int stride = width * sizeof(uint32_t);
-    int size = stride * height;
-
-    int fd = memfd_create("buffer", 0); // Use memfd_create instead of SYS_memfd_create
-    int ret = ftruncate(fd, size);
-    unsigned char *shm_data = (unsigned char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0); // Change type to unsigned char *
-
-    // Decode base64 image and populate shared memory buffer
-    // Note: You need to implement your own decoding logic here
-    // For demonstration purposes, I assume a simple copy operation
-    memcpy(data, image_base64, size);
-
-    struct wl_shm_pool *pool = wl_shm_create_pool(shm, fd, size);
-    struct wl_buffer *buffer = wl_shm_pool_create_buffer(pool, 0, width, height, stride, WL_SHM_FORMAT_ARGB8888);
-    wl_surface_attach(surface, buffer, 0, 0);
-    wl_surface_commit(surface);
-
-    // Display image
-    while (wl_display_dispatch(display) != -1) {}
 
     // Clean up
-    wl_display_disconnect(display);
-    free(image_base64);
+    json_object_put(response_json);
+
 
     return 0;
 }
