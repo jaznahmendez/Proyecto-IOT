@@ -2,10 +2,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <wayland-client.h>
+#include <jpeglib.h>
 #include <string.h>
 #include <syscall.h>
 #include <sys/mman.h>
-#include <jpeglib.h>
 
 struct wl_display *display;
 
@@ -94,15 +94,20 @@ int main(int argc, char *argv[]) {
 
     int width = cinfo.output_width;
     int height = cinfo.output_height;
-    int num_channels = cinfo.output_components;
+    int num_channels = cinfo.output_components; // Number of color channels
+
+    // Calculate stride (bytes per row) based on the width and number of channels
     int stride = width * num_channels;
+    // Ensure stride is aligned to 4 bytes (32 bits)
+    stride = (stride + 3) & ~3;
 
-    unsigned char *raw_image_data = malloc(stride * height);
-    unsigned char *row_pointer;
+    int size = stride * height;
+    unsigned char *raw_image_data = malloc(size);
 
+    // Read scanlines one by one and copy them into raw_image_data buffer
+    unsigned char *row_pointer = raw_image_data;
     while (cinfo.output_scanline < cinfo.output_height) {
-        row_pointer = &raw_image_data[(cinfo.output_scanline) * stride];
-        jpeg_read_scanlines(&cinfo, &row_pointer, 1);
+        row_pointer += jpeg_read_scanlines(&cinfo, &row_pointer, 1) * stride;
     }
 
     jpeg_finish_decompress(&cinfo);
@@ -110,7 +115,6 @@ int main(int argc, char *argv[]) {
     fclose(jpg_file);
 
     // Create shared memory pool and buffer
-    int size = stride * height;
     int fd = syscall(SYS_memfd_create, "buffer", 0);
     ftruncate(fd, size);
     unsigned int *data = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
