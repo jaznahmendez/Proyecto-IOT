@@ -8,19 +8,22 @@
 #include <curl/curl.h>
 #include <json-c/json.h>
 #include <wayland-client.h>
-
+#include <sys/mman.h> 
 
 struct wl_display *display;
 struct wl_compositor *compositor;
-struct wl_surface *surface;
+struct wl_surface *surface; // Define surface globally for later use
+struct wl_shm *shm;
+struct wl_shell *shell;
 
-void registry_global_handler(void *data, struct wl_registry *registry, 
+void registry_global_handler(void *data, struct wl_registry *registry,
                              uint32_t id, const char *interface, uint32_t version) {
     if (strcmp(interface, "wl_compositor") == 0) {
         compositor = wl_registry_bind(registry, id, &wl_compositor_interface, 1);
+    } else if (strcmp(interface, "wl_shm") == 0) {
+        shm = wl_registry_bind(registry, id, &wl_shm_interface, 1);
     }
 }
-
 
 struct wl_registry_listener registry_listener = {
     registry_global_handler
@@ -63,6 +66,62 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, struct json_object *
     return size * nmemb;
 }
 
+void api_call(const char *base64_string) {
+    CURL *hnd = curl_easy_init();
+
+    curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "POST");
+    curl_easy_setopt(hnd, CURLOPT_URL, "https://shazam.p.rapidapi.com/songs/v2/detect?timezone=America%2FChicago&locale=en-US");
+
+    struct curl_slist *headers = NULL;
+    headers = curl_slist_append(headers, "content-type: text/plain");
+    headers = curl_slist_append(headers, "X-RapidAPI-Key: f6787ff0a0msh2ab7233cbd00cf2p16188ejsncc0c1d880713");
+    headers = curl_slist_append(headers, "X-RapidAPI-Host: shazam.p.rapidapi.com");
+    curl_easy_setopt(hnd, CURLOPT_HTTPHEADER, headers);
+
+    curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, base64_string);
+
+    struct json_object *response_json = json_object_new_object();
+
+    curl_easy_setopt(hnd, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(hnd, CURLOPT_WRITEDATA, response_json);
+
+    CURLcode ret = curl_easy_perform(hnd);
+
+    curl_easy_cleanup(hnd);
+    curl_slist_free_all(headers);
+
+    if (ret != CURLE_OK) {
+        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(ret));
+        json_object_put(response_json);
+        return;
+    }
+
+     struct json_object * metadata;
+    struct json_object * track;
+    struct json_object * title;
+    struct json_object * subtitle;
+    struct json_object * images;
+    struct json_object * coverart;
+    metadata = json_object_object_get(response_json, "response");
+    track = json_object_object_get(metadata, "track");
+    title = json_object_object_get(track, "title");
+    subtitle = json_object_object_get(track, "subtitle");
+    images = json_object_object_get(track, "images");
+    coverart = json_object_object_get(images, "coverart");
+
+    printf("JSON CREATED\n");
+    //printf("Metadata JSON:\n%s\n", json_object_to_json_string_ext(metadata, JSON_C_TO_STRING_PRETTY));
+    printf("Title: %s\n", json_object_get_string(title));
+    printf("Subtitle: %s\n", json_object_get_string(subtitle));
+    printf("Coverart: %s\n", json_object_get_string(coverart));
+
+    // Print the parsed JSON object
+    //printf("Response JSON:\n%s\n", json_object_to_json_string_ext(response_json, JSON_C_TO_STRING_PRETTY));
+
+    json_object_put(response_json);
+}
+
+
 int main() {
     FILE *file = fopen("salmini.raw", "rb");
     if (file == NULL) {
@@ -91,61 +150,10 @@ int main() {
         return 1;
     }
 
-    CURL *hnd = curl_easy_init();
+    api_call(base64_string);
+   
 
-    curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "POST");
-    curl_easy_setopt(hnd, CURLOPT_URL, "https://shazam.p.rapidapi.com/songs/v2/detect?timezone=America%2FChicago&locale=en-US");
-
-    struct curl_slist *headers = NULL;
-    headers = curl_slist_append(headers, "content-type: text/plain");
-    headers = curl_slist_append(headers, "X-RapidAPI-Key: f6787ff0a0msh2ab7233cbd00cf2p16188ejsncc0c1d880713");
-    headers = curl_slist_append(headers, "X-RapidAPI-Host: shazam.p.rapidapi.com");
-    curl_easy_setopt(hnd, CURLOPT_HTTPHEADER, headers);
-
-    curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, base64_string);
-
-    struct json_object *response_json = json_object_new_object();
-
-    curl_easy_setopt(hnd, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(hnd, CURLOPT_WRITEDATA, response_json);
-
-    CURLcode ret = curl_easy_perform(hnd);
-
-    curl_easy_cleanup(hnd);
-    curl_slist_free_all(headers);
-
-    free(data);
-    free(base64_string);
-
-    if (ret != CURLE_OK) {
-        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(ret));
-        json_object_put(response_json);
-        return 1;
-    }
-
-    // Print the parsed JSON object
-    //printf("Response JSON:\n%s\n", json_object_to_json_string_ext(response_json, JSON_C_TO_STRING_PRETTY));
-
-    struct json_object * metadata;
-    struct json_object * track;
-    struct json_object * title;
-    struct json_object * subtitle;
-    struct json_object * images;
-    struct json_object * coverart;
-    metadata = json_object_object_get(response_json, "response");
-    track = json_object_object_get(metadata, "track");
-    title = json_object_object_get(track, "title");
-    subtitle = json_object_object_get(track, "subtitle");
-    images = json_object_object_get(track, "images");
-    coverart = json_object_object_get(images, "coverart");
-
-    printf("JSON CREATED\n");
-    //printf("Metadata JSON:\n%s\n", json_object_to_json_string_ext(metadata, JSON_C_TO_STRING_PRETTY));
-    printf("Title: %s\n", json_object_get_string(title));
-    printf("Subtitle: %s\n", json_object_get_string(subtitle));
-    printf("Coverart: %s\n", json_object_get_string(coverart));
-
-    display = wl_display_connect(NULL);
+     display = wl_display_connect(NULL);
     if (!display) {
         fprintf(stderr, "Failed to connect to Wayland display\n");
         return 1;
@@ -167,19 +175,64 @@ int main() {
         return 1;
     }
 
-    const char *text = "Hello, Wayland!";
-    printf("Printing text: %s\n", text);
+    // Load image from file
+    FILE *image_file = fopen("image.jpg", "rb");
+    if (!image_file) {
+        fprintf(stderr, "Failed to open image file\n");
+        return 1;
+    }
 
-    wl_display_roundtrip(display);
+    fseek(image_file, 0, SEEK_END);
+    long image_size = ftell(image_file);
+    fseek(image_file, 0, SEEK_SET);
 
-    wl_display_disconnect(display);
-    
+    unsigned char *image_data = (unsigned char *)malloc(image_size);
+    if (!image_data) {
+        fprintf(stderr, "Failed to allocate memory for image\n");
+        fclose(image_file);
+        return 1;
+    }
 
+    fread(image_data, 1, image_size, image_file);
+    fclose(image_file);
 
+    // Encode image data to base64
+    char *image_base64 = base64_encode(image_data, image_size);
+    if (!image_base64) {
+        fprintf(stderr, "Failed to encode image to base64\n");
+        free(image_data);
+        return 1;
+    }
+
+    // Cleanup image data
+    free(image_data);
+
+    // Create shared memory pool and buffer
+    int width = 400;
+    int height = 400;
+    int stride = width * sizeof(uint32_t);
+    int size = stride * height;
+
+    int fd = memfd_create("buffer", 0); // Use memfd_create instead of SYS_memfd_create
+    int ret = ftruncate(fd, size);
+    unsigned char *shm_data = (unsigned char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0); // Change type to unsigned char *
+
+    // Decode base64 image and populate shared memory buffer
+    // Note: You need to implement your own decoding logic here
+    // For demonstration purposes, I assume a simple copy operation
+    memcpy(data, image_base64, size);
+
+    struct wl_shm_pool *pool = wl_shm_create_pool(shm, fd, size);
+    struct wl_buffer *buffer = wl_shm_pool_create_buffer(pool, 0, width, height, stride, WL_SHM_FORMAT_ARGB8888);
+    wl_surface_attach(surface, buffer, 0, 0);
+    wl_surface_commit(surface);
+
+    // Display image
+    while (wl_display_dispatch(display) != -1) {}
 
     // Clean up
-    json_object_put(response_json);
-
+    wl_display_disconnect(display);
+    free(image_base64);
 
     return 0;
 }
