@@ -188,6 +188,9 @@ int main() {
     fseek(image_file, 0, SEEK_END);
     long image_size = ftell(image_file);
     fseek(image_file, 0, SEEK_SET);
+    
+    printf("Image file size: %ld\n", image_size);
+
 
     unsigned char *image_data = (unsigned char *)malloc(image_size);
     if (!image_data) {
