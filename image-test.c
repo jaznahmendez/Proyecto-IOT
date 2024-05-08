@@ -82,8 +82,8 @@ int main(int argc, char *argv[]) {
 
     // Create shared memory pool and buffer for solid color
     int stride = 4; // 4 bytes per pixel for ARGB8888 format
-    int width = 1920; // Width of the screen
-    int height = 1080; // Height of the screen
+    int width = 1080; // Width of the screen
+    int height = 1920; // Height of the screen
     int size = stride * width * height; // Size of the buffer
 
     int fd = syscall(SYS_memfd_create, "buffer", 0);
