@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h> // Added for malloc
 #include <unistd.h>
 #include <fcntl.h>
 #include <wayland-client.h>
@@ -108,6 +109,11 @@ int main(int argc, char *argv[]) {
     unsigned char *row_pointer = raw_image_data;
     while (cinfo.output_scanline < cinfo.output_height) {
         row_pointer += jpeg_read_scanlines(&cinfo, &row_pointer, 1) * stride;
+    }
+
+    // Fill alpha channel with 0xFF for each pixel
+    for (int i = 0; i < size; i += num_channels) {
+        raw_image_data[i + 3] = 0xFF; // Alpha channel
     }
 
     jpeg_finish_decompress(&cinfo);
