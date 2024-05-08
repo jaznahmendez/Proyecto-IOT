@@ -60,7 +60,7 @@ void render_text(unsigned char *buffer, int width, int height, const char *text,
     unsigned char text_color[4] = {0, 0, 0, 255}; // ARGB format
 
     // Define font size and position
-    int font_size = 20; // Adjust as needed
+    int font_size = 5; // Adjust as needed
 
     // Define a simple font
     const char *font[] = {
@@ -76,17 +76,17 @@ void render_text(unsigned char *buffer, int width, int height, const char *text,
         int char_index = text[i] - ' ';
         if (char_index >= 0 && char_index < 95) // Assuming ASCII characters
         {
-            for (int j = 0; j < 5; j++)
+            for (int j = 0; j < font_size; j++)
             {
-                for (int k = 0; k < 5; k++)
+                for (int k = 0; k < font_size; k++)
                 {
-                    if (font[j][char_index * 5 + k] == 'X')
+                    if (font[j][char_index * font_size + k] == 'X')
                     {
                         // Set pixel color for text
-                        buffer[(y + j) * stride + (x + i * 6 + k) * 4 + 0] = text_color[0]; // R
-                        buffer[(y + j) * stride + (x + i * 6 + k) * 4 + 1] = text_color[1]; // G
-                        buffer[(y + j) * stride + (x + i * 6 + k) * 4 + 2] = text_color[2]; // B
-                        buffer[(y + j) * stride + (x + i * 6 + k) * 4 + 3] = text_color[3]; // A
+                        buffer[(y + j) * stride + (x + i * (font_size + 1) + k) * 4 + 0] = text_color[0]; // R
+                        buffer[(y + j) * stride + (x + i * (font_size + 1) + k) * 4 + 1] = text_color[1]; // G
+                        buffer[(y + j) * stride + (x + i * (font_size + 1) + k) * 4 + 2] = text_color[2]; // B
+                        buffer[(y + j) * stride + (x + i * (font_size + 1) + k) * 4 + 3] = text_color[3]; // A
                     }
                 }
             }
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
     wl_surface_commit(surface);
 
     // Render text onto the buffer
-    render_text((unsigned char *)data, 500, 500, "TITLE", 10, 30);
+    render_text((unsigned char *)data, width, height, "TITLE", 10, 30);
 
     free(raw_image_data);
 
