@@ -60,7 +60,7 @@ void render_text(unsigned char *buffer, int width, int height, const char *text,
     unsigned char text_color[4] = {0, 0, 0, 255}; // ARGB format
 
     // Define font size and position
-    int font_size = 5; // Adjust as needed
+    int font_size = 10; // Adjust as needed
 
     // Define a simple font
     const char *font[] = {
@@ -194,16 +194,18 @@ int main(int argc, char *argv[])
                                                          0, width, height, stride, WL_SHM_FORMAT_ARGB8888);
 
     wl_surface_attach(surface, buffer, 0, 0);
-    wl_surface_commit(surface);
 
     // Render text onto the buffer
-    render_text((unsigned char *)data, 500, 500, "TITLE", 100, 300);
+    render_text((unsigned char *)data, width, height, "TITLE", 10, 30);
+
+    // Commit the surface
+    wl_surface_commit(surface);
 
     free(raw_image_data);
 
-    while (1)
+    while (wl_display_dispatch(display) != -1)
     {
-        wl_display_dispatch(display);
+        // Keep processing events
     }
 
     wl_display_disconnect(display);
