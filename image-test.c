@@ -49,6 +49,51 @@ struct wl_registry_listener listener = {
     registry_global_handler,
     registry_global_remove_handler};
 
+// Function to load JPEG image
+unsigned char *load_jpeg(const char *filename, int *width, int *height)
+{
+    FILE *jpg_file = fopen(filename, "rb");
+    if (!jpg_file)
+    {
+        printf("Error opening image file\n");
+        return NULL;
+    }
+
+    struct jpeg_decompress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_decompress(&cinfo);
+    jpeg_stdio_src(&cinfo, jpg_file);
+    jpeg_read_header(&cinfo, TRUE);
+    jpeg_start_decompress(&cinfo);
+
+    *width = cinfo.output_width;
+    *height = cinfo.output_height;
+    int num_channels = cinfo.output_components; // Number of color channels
+
+    // Calculate stride (bytes per row) based on the width and number of channels
+    int stride = *width * num_channels;
+    // Ensure stride is aligned to 4 bytes (32 bits)
+    stride = (stride + 3) & ~3;
+
+    int size = stride * *height;
+    unsigned char *raw_image_data = malloc(size);
+
+    // Read scanlines one by one and copy them into raw_image_data buffer
+    unsigned char *row_pointer = raw_image_data;
+    while (cinfo.output_scanline < cinfo.output_height)
+    {
+        row_pointer += jpeg_read_scanlines(&cinfo, &row_pointer, 1) * stride;
+    }
+
+    jpeg_finish_decompress(&cinfo);
+    jpeg_destroy_decompress(&cinfo);
+    fclose(jpg_file);
+
+    return raw_image_data;
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -88,25 +133,31 @@ int main(int argc, char *argv[])
     struct wl_shell_surface *shell_surface = wl_shell_get_shell_surface(shell, surface);
     wl_shell_surface_set_toplevel(shell_surface);
 
-    // Set background color (solid color)
-    uint32_t color = 0xFF0000FF; // ARGB format (Alpha, Red, Green, Blue)
+    // Load JPEG image
+    int width, height;
+    unsigned char *raw_image_data = load_jpeg("image.jpg", &width, &height);
+    if (!raw_image_data)
+    {
+        return -1;
+    }
 
-    // Create shared memory pool and buffer for solid color
-    int width = 1920;  // Width of the screen
-    int height = 1080; // Height of the screen
-    int size = width * height * 4; // Size of the buffer, assuming 32-bit ARGB format
+    // Create shared memory pool and buffer for image
+    int stride = width * 4; // 4 bytes per pixel for ARGB8888 format
+    int size = stride * height;
 
     int fd = syscall(SYS_memfd_create, "buffer", 0);
     ftruncate(fd, size);
     unsigned int *data = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    memset(data, color, size); // Fill buffer with the solid color
+    memcpy(data, raw_image_data, size); // Copy image data to buffer
 
     struct wl_shm_pool *pool = wl_shm_create_pool(shm, fd, size);
     struct wl_buffer *buffer = wl_shm_pool_create_buffer(pool,
-                                                          0, width, height, width * 4, WL_SHM_FORMAT_ARGB8888);
+                                                          0, width, height, stride, WL_SHM_FORMAT_ARGB8888);
 
     wl_surface_attach(surface, buffer, 0, 0);
     wl_surface_commit(surface);
+
+    free(raw_image_data); // Free memory allocated for image data
 
     while (wl_display_dispatch(display) != -1)
     {
