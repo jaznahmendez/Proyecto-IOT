@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
     int num_channels = cinfo.output_components; // Number of color channels
 
     // Calculate stride (bytes per row) based on the width and number of channels
-    int stride = width * num_channels;
+    int stride = width * 4; // Always use 4 bytes per pixel (ARGB)
     // Ensure stride is aligned to 4 bytes (32 bits)
     stride = (stride + 3) & ~3;
 
@@ -108,12 +108,8 @@ int main(int argc, char *argv[]) {
     // Read scanlines one by one and copy them into raw_image_data buffer
     unsigned char *row_pointer = raw_image_data;
     while (cinfo.output_scanline < cinfo.output_height) {
-        row_pointer += jpeg_read_scanlines(&cinfo, &row_pointer, 1) * stride;
-    }
-
-    // Fill alpha channel with 0xFF for each pixel
-    for (int i = 0; i < size; i += num_channels) {
-        raw_image_data[i + 3] = 0xFF; // Alpha channel
+        jpeg_read_scanlines(&cinfo, &row_pointer, 1);
+        row_pointer += stride;
     }
 
     jpeg_finish_decompress(&cinfo);
@@ -124,7 +120,15 @@ int main(int argc, char *argv[]) {
     int fd = syscall(SYS_memfd_create, "buffer", 0);
     ftruncate(fd, size);
     unsigned int *data = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    memcpy(data, raw_image_data, size);
+    
+    // Copy image data to the buffer, converting from RGB to ARGB
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            unsigned char *src_pixel = &raw_image_data[i * stride + j * num_channels];
+            unsigned int *dst_pixel = &data[i * width + j];
+            *dst_pixel = 0xFF000000 | (src_pixel[0] << 16) | (src_pixel[1] << 8) | src_pixel[2];
+        }
+    }
 
     struct wl_shm_pool *pool = wl_shm_create_pool(shm, fd, size);
     struct wl_buffer *buffer = wl_shm_pool_create_buffer(pool,
