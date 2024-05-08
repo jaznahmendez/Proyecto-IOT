@@ -76,9 +76,9 @@ void render_text(unsigned char *buffer, int width, int height, const char *text,
         int char_index = text[i] - ' ';
         if (char_index >= 0 && char_index < 95) // Assuming ASCII characters
         {
-            for (int j = 0; j < font_size; j++)
+            for (int j = 0; j < font_size && y + j < height; j++)
             {
-                for (int k = 0; k < font_size; k++)
+                for (int k = 0; k < font_size && x + i * (font_size + 1) + k < width; k++)
                 {
                     if (font[j][char_index * font_size + k] == 'X')
                     {
@@ -175,9 +175,25 @@ int main(int argc, char *argv[])
 
     // Create shared memory pool and buffer
     int fd = syscall(SYS_memfd_create, "buffer", 0);
-    ftruncate(fd, size);
+    if (fd == -1)
+    {
+        perror("syscall");
+        return -1;
+    }
+    if (ftruncate(fd, size) == -1)
+    {
+        perror("ftruncate");
+        close(fd);
+        return -1;
+    }
     unsigned int *data = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    
+    if (data == MAP_FAILED)
+    {
+        perror("mmap");
+        close(fd);
+        return -1;
+    }
+
     // Copy image data to the buffer, converting from RGB to ARGB
     for (int i = 0; i < height; i++)
     {
