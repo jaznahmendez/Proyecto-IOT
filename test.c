@@ -216,7 +216,7 @@ int main() {
 
 
     // Cleanup image data
-    free(image_data);
+    //free(image_data);
 
     // Create shared memory pool and buffer
     int width = 400;
