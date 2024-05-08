@@ -6,6 +6,7 @@
 #include <string.h>
 #include <syscall.h>
 #include <sys/mman.h>
+#include <stdlib.h>
 
 struct wl_display *display;
 
@@ -109,7 +110,7 @@ int main(int argc, char *argv[]) {
     // Read scanlines one by one and copy them into raw_image_data buffer
     unsigned char *row_pointer = raw_image_data;
     while (cinfo.output_scanline < cinfo.output_height) {
-        row_pointer += jpeg_read_scanlines(&cinfo, &row_pointer, 1) * stride;
+        row_pointer += jpeg_read_scanlines(&cinfo, &row_pointer, 1);
     }
 
     jpeg_finish_decompress(&cinfo);
@@ -132,8 +133,7 @@ int main(int argc, char *argv[]) {
 
     free(raw_image_data);
 
-    while (1) {
-        wl_display_dispatch(display);
+    while (wl_display_dispatch(display) != -1) {
     }
 
     wl_display_disconnect(display);
