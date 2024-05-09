@@ -211,10 +211,12 @@ void api_call(const char *base64_string) {
     //printf("Response JSON:\n%s\n", json_object_to_json_string_ext(response_json, JSON_C_TO_STRING_PRETTY));
 
     json_object_put(response_json);
+    char buff[2048];
+    strcpy(buff, "wget ");
+    strcat(buff, json_object_get_string(coverart));
 
-    char *command = malloc(strlen("curl -o image.jpg ") + strlen(json_object_get_string(coverart)) + 1);
-
-    system(command);
+    system(buff);
+    system("mv 400x400cc.jpg image.jpg");
     display_image();
     return;
 }
