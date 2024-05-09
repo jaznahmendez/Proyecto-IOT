@@ -214,9 +214,10 @@ void api_call(const char *base64_string) {
     char buff[2048];
     strcpy(buff, "wget ");
     strcat(buff, json_object_get_string(coverart));
+    puts(buff);
 
-    system(buff);
-    system("mv 400x400cc.jpg image.jpg");
+    //system(buff);
+    //system("mv 400x400cc.jpg image.jpg");
     display_image();
     return;
 }
