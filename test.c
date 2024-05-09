@@ -209,6 +209,7 @@ void api_call(const char *base64_string) {
 
     json_object_put(response_json);
 
+    system("curl -o image.jpg $(json_object_get_string(coverart))")
     display_image();
     return;
 }
