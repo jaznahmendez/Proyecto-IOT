@@ -221,7 +221,7 @@ void api_call(const char *base64_string) {
 
 
 int main() {
-    FILE *file = fopen("salmini.raw", "rb");
+    FILE *file = fopen("For Whom The Bell Tolls (Remastered).raw", "rb");
     if (file == NULL) {
         perror("Error opening file");
         return 1;
