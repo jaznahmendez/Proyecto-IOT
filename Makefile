@@ -5,8 +5,8 @@ CURL = curl
 WAYLAND = wayland-client
 JPG = jpeg
 
-APP_NAME = image-test
-OBJS = image-test.o
+APP_NAME = test
+OBJS = test.o
 
 all: $(APP_NAME)
 

@@ -8,6 +8,9 @@
 #include <curl/curl.h>
 #include <json-c/json.h>
 #include <wayland-client.h>
+#include <jpeglib.h>
+#include <syscall.h>
+#include <sys/mman.h>
 
 struct wl_display *display;
 struct wl_compositor *compositor;
@@ -185,7 +188,7 @@ void api_call(const char *base64_string) {
         return;
     }
 
-     truct json_object * metadata;
+    struct json_object * metadata;
     struct json_object * track;
     struct json_object * title;
     struct json_object * subtitle;
@@ -247,42 +250,5 @@ int main() {
 
     api_call(base64_string);
    
-
-    display = wl_display_connect(NULL);
-    if (!display) {
-        fprintf(stderr, "Failed to connect to Wayland display\n");
-        return 1;
-    }
-
-    struct wl_registry *registry = wl_display_get_registry(display);
-    wl_registry_add_listener(registry, &registry_listener, NULL);
-    wl_display_dispatch(display);
-    wl_display_roundtrip(display);
-
-    if (!compositor) {
-        fprintf(stderr, "Failed to get compositor\n");
-        return 1;
-    }
-
-    surface = wl_compositor_create_surface(compositor);
-    if (!surface) {
-        fprintf(stderr, "Failed to create surface\n");
-        return 1;
-    }
-
-    const char *text = "Hello, Wayland!";
-    printf("Printing text: %s\n", text);
-
-    wl_display_roundtrip(display);
-
-    wl_display_disconnect(display);
-    
-
-
-
-    // Clean up
-    json_object_put(response_json);
-
-
     return 0;
 }
