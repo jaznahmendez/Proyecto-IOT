@@ -210,7 +210,7 @@ void api_call(const char *base64_string) {
     // Print the parsed JSON object
     //printf("Response JSON:\n%s\n", json_object_to_json_string_ext(response_json, JSON_C_TO_STRING_PRETTY));
 
-    char *buff = "wget ";
+    char buff[2000] = "wget ";
     strcat(buff, json_object_get_string(coverart));
     puts(buff);
 
