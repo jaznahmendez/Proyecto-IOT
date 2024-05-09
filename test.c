@@ -209,7 +209,9 @@ void api_call(const char *base64_string) {
 
     json_object_put(response_json);
 
-    system("curl -o image.jpg $(json_object_get_string(coverart))")
+    char *command = malloc(strlen("curl -o image.jpg ") + strlen(json_object_get_string(coverart)) + 1);
+
+    system(command);
     display_image();
     return;
 }
