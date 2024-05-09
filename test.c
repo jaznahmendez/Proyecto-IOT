@@ -212,10 +212,10 @@ void api_call(const char *base64_string) {
 
     char buff[2000] = "wget ";
     strcat(buff, json_object_get_string(coverart));
-    puts(buff);
+    //puts(buff);
 
-    //system(buff);
-    //system("mv 400x400cc.jpg image.jpg");
+    system(buff);
+    system("mv 400x400cc.jpg image.jpg");
     display_image();
     json_object_put(response_json);
 
