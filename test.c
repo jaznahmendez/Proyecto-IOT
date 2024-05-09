@@ -210,7 +210,6 @@ void api_call(const char *base64_string) {
     // Print the parsed JSON object
     //printf("Response JSON:\n%s\n", json_object_to_json_string_ext(response_json, JSON_C_TO_STRING_PRETTY));
 
-    json_object_put(response_json);
     char *buff = "wget ";
     strcat(buff, json_object_get_string(coverart));
     puts(buff);
@@ -218,6 +217,8 @@ void api_call(const char *base64_string) {
     //system(buff);
     //system("mv 400x400cc.jpg image.jpg");
     display_image();
+    json_object_put(response_json);
+
     return;
 }
 
