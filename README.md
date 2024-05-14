@@ -1,4 +1,11 @@
 # Identificador de Canciones con Shazam y Wayland
+Laura González Camacho - ISC 734049,
+Jazmín Méndez Santana - ISC 734043,
+Naim Towfighian Ortiz - ISC 733447,
+Luther Williams Sandria - ISC 735869
+
+
+
 
 Este proyecto es un programa en C que utiliza la API de Shazam para identificar una canción a partir de un archivo de audio en formato RAW. Una vez identificada la canción, muestra la portada del álbum asociada a esa canción en una ventana utilizando Wayland.
 
